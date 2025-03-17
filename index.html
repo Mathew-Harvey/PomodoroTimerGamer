@@ -1,0 +1,1441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sync Pomodoro</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.4.7/peerjs.min.js"></script>
+    <style>
+        :root {
+            --primary: #5e60ce;
+            --primary-dark: #4e5dc9;
+            --secondary: #64dfdf;
+            --secondary-dark: #56c2c2;
+            --focus: #ff6b6b;
+            --rest: #48bfe3;
+            --text: #14213d;
+            --bg: #f8f9fa;
+            --light-gray: #e9ecef;
+            --card-bg: #ffffff;
+            --shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1000px;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 30px;
+            position: relative;
+        }
+        
+        @media (min-width: 900px) {
+            .container {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 15px;
+            box-shadow: var(--shadow);
+            padding: 30px;
+            transition: var(--transition);
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+            color: var(--primary);
+            text-align: center;
+        }
+        
+        h2 {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            color: var(--primary);
+        }
+        
+        .timer-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .time-display {
+            font-size: 6rem;
+            font-weight: bold;
+            margin: 20px 0;
+            color: var(--text);
+            font-variant-numeric: tabular-nums;
+        }
+        
+        .status {
+            font-size: 1.5rem;
+            margin-bottom: 30px;
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-weight: 600;
+        }
+        
+        .status.focus {
+            background-color: var(--focus);
+            color: white;
+        }
+        
+        .status.rest {
+            background-color: var(--rest);
+            color: white;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+        
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: var(--transition);
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        button:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+        
+        button.secondary {
+            background-color: var(--secondary);
+            color: var(--text);
+        }
+        
+        button.secondary:hover {
+            background-color: var(--secondary-dark);
+        }
+        
+        button.outlined {
+            background-color: transparent;
+            border: 2px solid var(--primary);
+            color: var(--primary);
+        }
+        
+        button.outlined:hover {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .timer-settings {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+            width: 100%;
+        }
+        
+        .setting-group {
+            flex: 1;
+        }
+        
+        .setting-label {
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+            color: var(--text);
+            opacity: 0.7;
+        }
+        
+        .setting-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--light-gray);
+            border-radius: 5px;
+            font-size: 1rem;
+        }
+        
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .tictactoe-board {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            grid-template-rows: repeat(3, 100px);
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .tictactoe-cell {
+            width: 100px;
+            height: 100px;
+            background-color: var(--light-gray);
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 2.5rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .tictactoe-cell:hover {
+            background-color: var(--secondary);
+        }
+        
+        .game-status {
+            margin-top: 20px;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        
+        .score-display {
+            display: flex;
+            gap: 20px;
+            margin: 15px 0;
+            justify-content: center;
+        }
+        
+        .score-card {
+            background-color: var(--light-gray);
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+        
+        .connection-info {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: var(--light-gray);
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .connection-status-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #ff6b6b; /* Red for disconnected */
+            transition: background-color 0.3s ease;
+        }
+        
+        .status-dot.connected {
+            background-color: #40c057; /* Green for connected */
+        }
+        
+        .share-url {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--light-gray);
+            border-radius: 5px;
+            margin-top: 10px;
+            font-size: 0.9rem;
+            word-break: break-all;
+            text-align: center;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            background-color: var(--primary);
+            color: white;
+            border-radius: 10px;
+            box-shadow: var(--shadow);
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: var(--transition);
+            z-index: 1000;
+        }
+        
+        .notification.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .welcome-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .welcome-card {
+            background-color: var(--card-bg);
+            border-radius: 15px;
+            padding: 40px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+        }
+        
+        .welcome-title {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            color: var(--primary);
+        }
+        
+        .welcome-subtitle {
+            font-size: 1.1rem;
+            margin-bottom: 30px;
+            color: var(--text);
+            opacity: 0.8;
+        }
+        
+        .welcome-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+        
+        .connection-dialog {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .connection-card {
+            background-color: var(--card-bg);
+            border-radius: 15px;
+            padding: 40px;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+        }
+        
+        .connection-title {
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            color: var(--primary);
+        }
+        
+        .connection-status {
+            font-size: 1.1rem;
+            margin: 20px 0;
+            color: var(--text);
+        }
+        
+        .connection-progress {
+            width: 100%;
+            height: 8px;
+            background-color: var(--light-gray);
+            border-radius: 4px;
+            margin: 20px 0;
+            overflow: hidden;
+        }
+        
+        .connection-progress-bar {
+            height: 100%;
+            background-color: var(--primary);
+            width: 0;
+            transition: width 0.3s ease;
+        }
+        
+        .connection-error {
+            color: #ff6b6b;
+            margin: 15px 0;
+            padding: 10px;
+            background-color: #fff8f8;
+            border-radius: 8px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card timer-card">
+            <h1>Sync Pomodoro</h1>
+            <div class="time-display" id="timeDisplay">25:00</div>
+            <div class="status focus" id="statusDisplay">Focus Time</div>
+            
+            <div class="controls">
+                <button id="startBtn">Start</button>
+                <button id="resetBtn" class="secondary">Reset</button>
+                <button id="syncBtn" class="outlined">Share & Sync</button>
+            </div>
+            
+            <div class="connection-info" id="connectionInfo">
+                <div class="connection-status-indicator">
+                    <div class="status-dot" id="connectionDot"></div>
+                    <div id="connectionStatus">Not connected</div>
+                </div>
+                <input type="text" id="shareUrl" class="share-url" readonly>
+                <button id="reconnectBtn" class="secondary" style="margin-top: 10px; display: none;">Reconnect</button>
+            </div>
+            
+            <div class="timer-settings">
+                <div class="setting-group">
+                    <div class="setting-label">Focus Duration (min)</div>
+                    <input type="number" id="focusDuration" class="setting-input" value="25" min="1" max="60">
+                </div>
+                <div class="setting-group">
+                    <div class="setting-label">Rest Duration (min)</div>
+                    <input type="number" id="restDuration" class="setting-input" value="5" min="1" max="30">
+                </div>
+            </div>
+        </div>
+        
+        <div class="card game-container" id="gameContainer" style="display: none;">
+            <h2>Break Time - Let's Play!</h2>
+            <div class="game-status" id="gameStatus">Waiting for your move (X)</div>
+            <div class="score-display">
+                <div class="score-card">Player X: <span id="scoreX">0</span></div>
+                <div class="score-card">Player O: <span id="scoreO">0</span></div>
+                <div class="score-card">Games: <span id="gamesPlayed">0</span></div>
+            </div>
+            <div class="tictactoe-board" id="tictactoeBoard">
+                <!-- Board cells will be added via JavaScript -->
+            </div>
+            <button id="newGameBtn" class="secondary" style="margin-top: 20px;">New Game</button>
+        </div>
+    </div>
+    
+    <div class="notification" id="notification">Link copied to clipboard!</div>
+    
+    <div class="welcome-screen" id="welcomeScreen">
+        <div class="welcome-card">
+            <h2 class="welcome-title">Welcome to Sync Pomodoro</h2>
+            <p class="welcome-subtitle">Focus together, play together. Sync your Pomodoro sessions with friends and enjoy mini-games during breaks.</p>
+            <div class="welcome-buttons">
+                <button id="createSessionBtn">Create New Session</button>
+                <button id="joinSessionBtn" class="secondary">Join Session</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="connection-dialog" id="connectionDialog" style="display: none;">
+        <div class="connection-card">
+            <h2 class="connection-title" id="connectionDialogTitle">Connecting to Session</h2>
+            <div class="connection-status" id="connectionDialogStatus">Initializing connection...</div>
+            <div class="connection-progress">
+                <div class="connection-progress-bar" id="connectionProgressBar"></div>
+            </div>
+            <div class="connection-error" id="connectionError"></div>
+            <div class="welcome-buttons">
+                <button id="cancelConnectionBtn" class="secondary">Cancel</button>
+                <button id="retryConnectionBtn" class="outlined" style="display: none;">Retry</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const timeDisplay = document.getElementById('timeDisplay');
+        const statusDisplay = document.getElementById('statusDisplay');
+        const startBtn = document.getElementById('startBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const syncBtn = document.getElementById('syncBtn');
+        const focusDurationInput = document.getElementById('focusDuration');
+        const restDurationInput = document.getElementById('restDuration');
+        const gameContainer = document.getElementById('gameContainer');
+        const gameStatus = document.getElementById('gameStatus');
+        const tictactoeBoard = document.getElementById('tictactoeBoard');
+        const connectionInfo = document.getElementById('connectionInfo');
+        const connectionStatus = document.getElementById('connectionStatus');
+        const connectionDot = document.getElementById('connectionDot');
+        const shareUrl = document.getElementById('shareUrl');
+        const notification = document.getElementById('notification');
+        const welcomeScreen = document.getElementById('welcomeScreen');
+        const createSessionBtn = document.getElementById('createSessionBtn');
+        const joinSessionBtn = document.getElementById('joinSessionBtn');
+        const scoreXDisplay = document.getElementById('scoreX');
+        const scoreODisplay = document.getElementById('scoreO');
+        const gamesPlayedDisplay = document.getElementById('gamesPlayed');
+        const newGameBtn = document.getElementById('newGameBtn');
+        
+        // Connection dialog elements
+        const connectionDialog = document.getElementById('connectionDialog');
+        const connectionDialogTitle = document.getElementById('connectionDialogTitle');
+        const connectionDialogStatus = document.getElementById('connectionDialogStatus');
+        const connectionProgressBar = document.getElementById('connectionProgressBar');
+        const connectionError = document.getElementById('connectionError');
+        const cancelConnectionBtn = document.getElementById('cancelConnectionBtn');
+        const retryConnectionBtn = document.getElementById('retryConnectionBtn');
+        const reconnectBtn = document.getElementById('reconnectBtn');
+
+        // Timer State
+        let timerState = {
+            timeRemaining: 25 * 60, // in seconds
+            isRunning: false,
+            isFocusTime: true,
+            focusDuration: 25 * 60, // in seconds
+            restDuration: 5 * 60, // in seconds
+            timerId: null
+        };
+
+        // Game State
+        let gameState = {
+            board: Array(9).fill(''),
+            isPlayerX: true,
+            isMyTurn: true,
+            scoreX: 0,
+            scoreO: 0,
+            gamesPlayed: 0
+        };
+
+        // Connection State
+        let connectionState = {
+            peer: null,
+            peerId: null,
+            connection: null,
+            isConnected: false,
+            isHost: false,
+            isJoining: false,
+            connectionTimeout: null,
+            lastPeerId: null
+        };
+
+        // Initialize the game board
+        function initializeGameBoard() {
+            tictactoeBoard.innerHTML = '';
+            for (let i = 0; i < 9; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'tictactoe-cell';
+                cell.dataset.index = i;
+                cell.addEventListener('click', () => {
+                    console.log("Cell clicked:", i);
+                    handleCellClick(i);
+                });
+                tictactoeBoard.appendChild(cell);
+            }
+            
+            // Initialize with empty board
+            gameState.board = Array(9).fill('');
+        }
+
+        // Game board state - used to track actual state separately from UI
+        let currentBoardState = Array(9).fill('');
+        
+        // Update the game board UI based on the state
+        function updateGameBoard() {
+            const cells = tictactoeBoard.getElementsByClassName('tictactoe-cell');
+            
+            console.log("Updating game board with state:", JSON.stringify(gameState.board));
+            
+            // Save the current state to our tracking variable
+            currentBoardState = JSON.parse(JSON.stringify(gameState.board));
+            
+            // Ensure each cell's content matches the game state
+            for (let i = 0; i < cells.length; i++) {
+                cells[i].textContent = gameState.board[i];
+                
+                // Add styling to make cells more visible when occupied
+                if (gameState.board[i] === 'X') {
+                    cells[i].style.color = '#ff6b6b';
+                    cells[i].style.backgroundColor = '#f8f9fa';
+                    cells[i].style.fontWeight = 'bold';
+                } else if (gameState.board[i] === 'O') {
+                    cells[i].style.color = '#5e60ce';
+                    cells[i].style.backgroundColor = '#f8f9fa';
+                    cells[i].style.fontWeight = 'bold';
+                } else {
+                    cells[i].style.color = '';
+                    cells[i].style.backgroundColor = '';
+                    cells[i].style.fontWeight = '';
+                }
+            }
+            
+            // Force a repaint to ensure the UI updates
+            tictactoeBoard.style.display = 'none';
+            setTimeout(() => {
+                tictactoeBoard.style.display = 'grid';
+            }, 5); // Slightly longer delay to ensure update completes
+        }
+
+        // Handle cell click in Tic Tac Toe
+        function handleCellClick(index) {
+            // Check if it's my turn and the cell is empty
+            if (!gameState.isMyTurn || gameState.board[index] !== '') return;
+
+            // Make a deep copy of the board
+            const updatedBoard = JSON.parse(JSON.stringify(gameState.board));
+            const symbol = gameState.isPlayerX ? 'X' : 'O';
+            updatedBoard[index] = symbol;
+            
+            // Log before setting state
+            console.log("Before setting board:", JSON.stringify(gameState.board));
+            
+            // Update local state
+            gameState.board = updatedBoard;
+            
+            // Log after setting state
+            console.log("After setting board:", JSON.stringify(gameState.board));
+            
+            // Update the UI immediately
+            updateGameBoard();
+
+            // Check for winner or draw
+            const winner = checkWinner();
+            if (winner) {
+                gameStatus.textContent = `${winner} wins!`;
+                // Update score
+                if (winner === 'X') {
+                    gameState.scoreX++;
+                    scoreXDisplay.textContent = gameState.scoreX;
+                } else {
+                    gameState.scoreO++;
+                    scoreODisplay.textContent = gameState.scoreO;
+                }
+                gameState.gamesPlayed++;
+                gamesPlayedDisplay.textContent = gameState.gamesPlayed;
+                
+                // Send final game state to peer
+                if (connectionState.connection) {
+                    connectionState.connection.send({
+                        type: 'game-end',
+                        winner: winner,
+                        board: JSON.parse(JSON.stringify(gameState.board)), // Send a deep copy
+                        scoreX: gameState.scoreX,
+                        scoreO: gameState.scoreO,
+                        gamesPlayed: gameState.gamesPlayed
+                    });
+                }
+                return;
+            }
+
+            if (gameState.board.every(cell => cell !== '')) {
+                gameStatus.textContent = 'Game ended in a draw!';
+                gameState.gamesPlayed++;
+                gamesPlayedDisplay.textContent = gameState.gamesPlayed;
+                
+                // Send final game state to peer
+                if (connectionState.connection) {
+                    connectionState.connection.send({
+                        type: 'game-end',
+                        winner: 'draw',
+                        board: JSON.parse(JSON.stringify(gameState.board)), // Send a deep copy
+                        scoreX: gameState.scoreX,
+                        scoreO: gameState.scoreO,
+                        gamesPlayed: gameState.gamesPlayed
+                    });
+                }
+                return;
+            }
+
+            // Toggle turn
+            gameState.isMyTurn = false;
+            gameStatus.textContent = "Opponent's turn";
+
+            // Send move to peer - include the full updated board to ensure consistency
+            if (connectionState.connection) {
+                connectionState.connection.send({
+                    type: 'game-move',
+                    index: index,
+                    board: JSON.parse(JSON.stringify(gameState.board)) // Send a deep copy
+                });
+            }
+        }
+
+        // Check for a winner in Tic Tac Toe
+        function checkWinner() {
+            const winPatterns = [
+                [0, 1, 2], [3, 4, 5], [6, 7, 8], // rows
+                [0, 3, 6], [1, 4, 7], [2, 5, 8], // columns
+                [0, 4, 8], [2, 4, 6]             // diagonals
+            ];
+
+            for (const pattern of winPatterns) {
+                const [a, b, c] = pattern;
+                if (gameState.board[a] && gameState.board[a] === gameState.board[b] && gameState.board[a] === gameState.board[c]) {
+                    return gameState.board[a];
+                }
+            }
+
+            return null;
+        }
+
+        // Format seconds to MM:SS
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        // Update timer display
+        function updateTimerDisplay() {
+            timeDisplay.textContent = formatTime(timerState.timeRemaining);
+            
+            if (timerState.isFocusTime) {
+                statusDisplay.textContent = 'Focus Time';
+                statusDisplay.className = 'status focus';
+                gameContainer.style.display = 'none';
+            } else {
+                statusDisplay.textContent = 'Rest Time';
+                statusDisplay.className = 'status rest';
+                gameContainer.style.display = 'flex';
+                
+                // Only reset the game when first entering rest mode if no game is in progress
+                if (gameContainer.style.display === 'none' || gameState.board.every(cell => cell === '')) {
+                    console.log("Entering rest mode from display update, initializing game");
+                    resetGame();
+                }
+            }
+            
+            startBtn.textContent = timerState.isRunning ? 'Pause' : 'Start';
+        }
+
+        // Start/pause timer
+        function toggleTimer() {
+            timerState.isRunning = !timerState.isRunning;
+            
+            if (timerState.isRunning) {
+                timerState.timerId = setInterval(tickTimer, 1000);
+                
+                // Sync with peer
+                if (connectionState.connection) {
+                    connectionState.connection.send({
+                        type: 'timer-start',
+                        state: timerState
+                    });
+                }
+            } else {
+                clearInterval(timerState.timerId);
+                
+                // Sync with peer
+                if (connectionState.connection) {
+                    connectionState.connection.send({
+                        type: 'timer-pause',
+                        state: timerState
+                    });
+                }
+            }
+            
+            updateTimerDisplay();
+        }
+
+        // Timer tick
+        function tickTimer() {
+            timerState.timeRemaining -= 1;
+            
+            if (timerState.timeRemaining <= 0) {
+                // Switch between focus and rest
+                timerState.isFocusTime = !timerState.isFocusTime;
+                timerState.timeRemaining = timerState.isFocusTime ? timerState.focusDuration : timerState.restDuration;
+                
+                // Show notification
+                showNotification(timerState.isFocusTime ? 'Focus time started!' : 'Rest time! Game unlocked!');
+                
+                // If starting a rest period, only reset the game if not already in progress
+                if (!timerState.isFocusTime && gameState.board.every(cell => cell === '')) {
+                    console.log("Starting new rest period, initializing game");
+                    resetGame();
+                }
+                
+                // Sync with peer
+                if (connectionState.connection) {
+                    connectionState.connection.send({
+                        type: 'timer-phase-change',
+                        state: timerState
+                    });
+                }
+            }
+            
+            updateTimerDisplay();
+        }
+
+        // Reset timer
+        function resetTimer() {
+            clearInterval(timerState.timerId);
+            timerState.isRunning = false;
+            timerState.isFocusTime = true;
+            timerState.timeRemaining = timerState.focusDuration;
+            updateTimerDisplay();
+            
+            // Sync with peer
+            if (connectionState.connection) {
+                connectionState.connection.send({
+                    type: 'timer-reset',
+                    state: timerState
+                });
+            }
+        }
+
+        // Update timer settings
+        function updateTimerSettings() {
+            const newFocusDuration = parseInt(focusDurationInput.value) * 60;
+            const newRestDuration = parseInt(restDurationInput.value) * 60;
+            
+            // Store original values to check if there's a change
+            const oldFocusDuration = timerState.focusDuration;
+            const oldRestDuration = timerState.restDuration;
+            
+            // Update the duration settings
+            timerState.focusDuration = newFocusDuration;
+            timerState.restDuration = newRestDuration;
+            
+            // If we're currently in the phase that was changed, update the time remaining
+            if (timerState.isFocusTime && oldFocusDuration !== newFocusDuration) {
+                // Only update if timer is not running or if we explicitly want to update running timers
+                if (!timerState.isRunning) {
+                    timerState.timeRemaining = newFocusDuration;
+                }
+            } else if (!timerState.isFocusTime && oldRestDuration !== newRestDuration) {
+                // Only update if timer is not running or if we explicitly want to update running timers
+                if (!timerState.isRunning) {
+                    timerState.timeRemaining = newRestDuration;
+                }
+            }
+            
+            updateTimerDisplay();
+            
+            // Sync with peer
+            if (connectionState.connection) {
+                connectionState.connection.send({
+                    type: 'timer-settings-update',
+                    state: {
+                        focusDuration: timerState.focusDuration,
+                        restDuration: timerState.restDuration,
+                        timeRemaining: timerState.timeRemaining,
+                        isFocusTime: timerState.isFocusTime,
+                        isRunning: timerState.isRunning
+                    }
+                });
+            }
+        }
+
+        // Reset game
+        function resetGame() {
+            // Check if we already have a game in progress
+            if (!currentBoardState.every(cell => cell === '')) {
+                console.log("Game in progress, not resetting board:", JSON.stringify(currentBoardState));
+                return; // Don't reset if there's a game in progress
+            }
+            
+            // Create a new empty board
+            const newBoard = Array(9).fill('');
+            console.log("Resetting game with empty board:", JSON.stringify(newBoard));
+            
+            // Update the game state
+            gameState.board = newBoard;
+            gameState.isMyTurn = connectionState.isHost || !connectionState.isConnected;
+            
+            // Update the UI
+            updateGameBoard();
+            updateScoreDisplay();
+            gameStatus.textContent = gameState.isMyTurn ? 
+                                    `Your turn (${gameState.isPlayerX ? 'X' : 'O'})` : 
+                                    "Opponent's turn";
+        }
+        
+        // Start a new game (keep scores)
+        function startNewGame() {
+            // Create a new empty board with all cells empty
+            const newBoard = Array(9).fill('');
+            console.log("Starting new game with empty board:", JSON.stringify(newBoard));
+            
+            // Set the board state
+            gameState.board = newBoard;
+            
+            // Alternate who goes first
+            if (gameState.gamesPlayed % 2 === 0) {
+                gameState.isMyTurn = connectionState.isHost || !connectionState.isConnected;
+            } else {
+                gameState.isMyTurn = !connectionState.isHost || !connectionState.isConnected;
+            }
+            
+            // Update the UI
+            updateGameBoard();
+            gameStatus.textContent = gameState.isMyTurn ? 
+                                    `Your turn (${gameState.isPlayerX ? 'X' : 'O'})` : 
+                                    "Opponent's turn";
+                                    
+            // Send new game state to peer
+            if (connectionState.connection) {
+                connectionState.connection.send({
+                    type: 'new-game',
+                    board: JSON.parse(JSON.stringify(newBoard)), // Send a deep copy
+                    isMyTurn: !gameState.isMyTurn
+                });
+            }
+        }
+        
+        // Update score display
+        function updateScoreDisplay() {
+            scoreXDisplay.textContent = gameState.scoreX;
+            scoreODisplay.textContent = gameState.scoreO;
+            gamesPlayedDisplay.textContent = gameState.gamesPlayed;
+        }
+
+        // Update connection dialog
+        function updateConnectionDialog(message, progress) {
+            connectionDialogStatus.textContent = message;
+            connectionProgressBar.style.width = progress + '%';
+        }
+        
+        // Show connection error
+        function showConnectionError(message) {
+            console.log("Connection error:", message);
+            connectionError.style.display = 'block';
+            connectionError.textContent = message;
+            connectionDialogStatus.textContent = 'Connection failed';
+            retryConnectionBtn.style.display = 'block';
+        }
+        
+        // Complete connection process
+        function completeConnection() {
+            updateConnectionDialog('Connection complete!', 100);
+            
+            // Hide the dialog after a brief delay
+            setTimeout(() => {
+                connectionDialog.style.display = 'none';
+                if (!connectionState.isJoining) {
+                    shareSession();
+                }
+            }, 1000);
+        }
+
+        // Initialize PeerJS connection
+        function initializePeer() {
+            try {
+                // Generate a more reliable ID
+                const peerId = Math.random().toString(36).substring(2, 8).toUpperCase();
+                
+                connectionState.peer = new Peer(peerId, {
+                    debug: 2,
+                    config: {
+                        iceServers: [
+                            { urls: 'stun:stun.l.google.com:19302' }
+                        ]
+                    }
+                });
+                
+                connectionState.peerId = peerId;
+                
+                connectionState.peer.on('open', (id) => {
+                    console.log('My peer ID is: ' + id);
+                    connectionState.peerId = id;
+                    updateConnectionDialog('Peer initialized', 30);
+                    
+                    // If we're the host, show the share URL immediately
+                    if (!connectionState.isJoining) {
+                        shareSession();
+                    }
+                });
+                
+                connectionState.peer.on('connection', (conn) => {
+                    handlePeerConnection(conn);
+                });
+                
+                connectionState.peer.on('error', (err) => {
+                    console.error('Peer error:', err);
+                    showConnectionError('Connection error: ' + err.message);
+                });
+            } catch (error) {
+                console.error('Failed to initialize PeerJS:', error);
+                showConnectionError('Failed to initialize connection');
+            }
+        }
+
+        // Handle incoming peer connection
+        function handlePeerConnection(conn) {
+            connectionState.connection = conn;
+            connectionState.isConnected = true;
+            connectionState.isHost = true;
+            
+            conn.on('open', () => {
+                connectionStatus.textContent = 'Connected with peer';
+                connectionDot.classList.add('connected');
+                showNotification('Peer connected!');
+                updateConnectionDialog('Peer connected', 70);
+                
+                // Send current timer state
+                conn.send({
+                    type: 'timer-sync',
+                    state: timerState
+                });
+                
+                completeConnection();
+            });
+            
+            conn.on('data', handlePeerData);
+            
+            conn.on('close', () => {
+                connectionState.isConnected = false;
+                connectionStatus.textContent = 'Connection closed';
+                connectionDot.classList.remove('connected');
+                showNotification('Peer disconnected');
+                reconnectBtn.style.display = 'block';
+            });
+            
+            conn.on('error', (err) => {
+                console.error('Connection error:', err);
+                showConnectionError('Connection error: ' + err.message);
+            });
+        }
+
+        // Generate and copy shareable link
+        function shareSession() {
+            console.log("Sharing session with peerId:", connectionState.peerId);
+            
+            if (!connectionState.peerId) {
+                showNotification('Connection not initialized yet');
+                return;
+            }
+            
+            // Create a simple code instead of a full URL
+            const shareCode = connectionState.peerId;
+            
+            // Update UI with share code
+            shareUrl.value = shareCode;
+            shareUrl.style.display = 'block';
+            
+            // Store the ID for potential reconnection
+            connectionState.lastPeerId = connectionState.peerId;
+            
+            // Copy to clipboard using modern API
+            navigator.clipboard.writeText(shareCode).then(() => {
+                showNotification('Share code copied to clipboard! Share this code with your friend.');
+                connectionStatus.textContent = 'Ready! Share this code to connect';
+            }).catch(() => {
+                // Fallback for older browsers
+                shareUrl.select();
+                document.execCommand('copy');
+                showNotification('Share code copied to clipboard! Share this code with your friend.');
+                connectionStatus.textContent = 'Ready! Share this code to connect';
+            });
+            
+            console.log("Share code generated:", shareCode);
+            return shareCode;
+        }
+
+        // Show notification
+        function showNotification(message) {
+            notification.textContent = message;
+            notification.classList.add('visible');
+            
+            setTimeout(() => {
+                notification.classList.remove('visible');
+            }, 3000);
+        }
+
+        // Connect to a peer
+        function connectToPeer(peerId) {
+            try {
+                updateConnectionDialog('Connecting to peer...', 40);
+                
+                // Clean up any existing connection
+                if (connectionState.connection) {
+                    connectionState.connection.close();
+                }
+                
+                const conn = connectionState.peer.connect(peerId);
+                
+                // Set a timeout for the connection
+                connectionState.connectionTimeout = setTimeout(() => {
+                    if (!connectionState.isConnected) {
+                        showConnectionError('Connection timed out. Please check the code and try again.');
+                    }
+                }, 10000);
+                
+                conn.on('open', () => {
+                    clearTimeout(connectionState.connectionTimeout);
+                    connectionState.connection = conn;
+                    connectionState.isConnected = true;
+                    connectionState.isHost = false;
+                    connectionStatus.textContent = 'Connected with host';
+                    connectionDot.classList.add('connected');
+                    showNotification('Connected to host!');
+                    updateConnectionDialog('Connected to host', 70);
+                    
+                    // In Tic Tac Toe, the joining player is O
+                    gameState.isPlayerX = false;
+                    
+                    completeConnection();
+                });
+                
+                conn.on('data', handlePeerData);
+                
+                conn.on('close', () => {
+                    clearTimeout(connectionState.connectionTimeout);
+                    connectionState.isConnected = false;
+                    connectionStatus.textContent = 'Connection closed';
+                    connectionDot.classList.remove('connected');
+                    showNotification('Disconnected from host');
+                    reconnectBtn.style.display = 'block';
+                });
+                
+                conn.on('error', (error) => {
+                    clearTimeout(connectionState.connectionTimeout);
+                    console.error('Connection error:', error);
+                    showConnectionError('Failed to connect: ' + error.message);
+                });
+            } catch (error) {
+                console.error('Failed to connect to peer:', error);
+                showConnectionError('Failed to connect: ' + error.message);
+            }
+        }
+
+        // Handle data from peer
+        function handlePeerData(data) {
+            console.log('Received data:', data);
+            
+            switch (data.type) {
+                case 'timer-sync':
+                    // Sync entire timer state
+                    timerState = data.state;
+                    clearInterval(timerState.timerId);
+                    if (timerState.isRunning) {
+                        timerState.timerId = setInterval(tickTimer, 1000);
+                    }
+                    updateTimerDisplay();
+                    break;
+                    
+                case 'timer-start':
+                    timerState.isRunning = true;
+                    clearInterval(timerState.timerId);
+                    timerState.timerId = setInterval(tickTimer, 1000);
+                    updateTimerDisplay();
+                    break;
+                    
+                case 'timer-pause':
+                    timerState.isRunning = false;
+                    clearInterval(timerState.timerId);
+                    updateTimerDisplay();
+                    break;
+                    
+                case 'timer-reset':
+                    clearInterval(timerState.timerId);
+                    timerState.isRunning = false;
+                    timerState.isFocusTime = true;
+                    timerState.timeRemaining = timerState.focusDuration;
+                    updateTimerDisplay();
+                    break;
+                    
+                case 'timer-phase-change':
+                    timerState.isFocusTime = data.state.isFocusTime;
+                    timerState.timeRemaining = data.state.timeRemaining;
+                    updateTimerDisplay();
+                    showNotification(timerState.isFocusTime ? 'Focus time started!' : 'Rest time! Game unlocked!');
+                    
+                    // Only reset the game if starting a rest period and no game is in progress
+                    if (!timerState.isFocusTime && gameState.board.every(cell => cell === '')) {
+                        console.log("Received phase change to rest, initializing game");
+                        resetGame();
+                    }
+                    break;
+                    
+                case 'timer-settings-update':
+                    // Update duration settings
+                    timerState.focusDuration = data.state.focusDuration;
+                    timerState.restDuration = data.state.restDuration;
+                    
+                    // Update UI input values
+                    focusDurationInput.value = timerState.focusDuration / 60;
+                    restDurationInput.value = timerState.restDuration / 60;
+                    
+                    // Update the current timer if needed
+                    if (data.state.isFocusTime === timerState.isFocusTime) {
+                        // Only update time remaining if we're in the same phase that was changed
+                        timerState.timeRemaining = data.state.timeRemaining;
+                    } else if (timerState.isFocusTime && !data.state.isRunning) {
+                        // If we're in focus time and the timer isn't running, update to the new focus duration
+                        timerState.timeRemaining = timerState.focusDuration;
+                    } else if (!timerState.isFocusTime && !data.state.isRunning) {
+                        // If we're in rest time and the timer isn't running, update to the new rest duration
+                        timerState.timeRemaining = timerState.restDuration;
+                    }
+                    
+                    // Update the timer display
+                    updateTimerDisplay();
+                    
+                    // Show notification about the update
+                    showNotification('Timer settings updated by peer');
+                    break;
+                    
+                case 'game-move':
+                    // Store the board state first to avoid losing it
+                    console.log("Received game move. Before update:", JSON.stringify(gameState.board));
+                    const updatedBoard = [...data.board];
+                    gameState.board = updatedBoard;
+                    console.log("After update:", JSON.stringify(gameState.board));
+                    
+                    // Update the UI immediately
+                    updateGameBoard();
+                    
+                    // Check for winner or draw
+                    const winner = checkWinner();
+                    if (winner) {
+                        gameStatus.textContent = `${winner} wins!`;
+                        return;
+                    }
+                    
+                    if (gameState.board.every(cell => cell !== '')) {
+                        gameStatus.textContent = 'Game ended in a draw!';
+                        return;
+                    }
+                    
+                    // It's my turn now
+                    gameState.isMyTurn = true;
+                    gameStatus.textContent = `Your turn (${gameState.isPlayerX ? 'X' : 'O'})`;
+                    break;
+                    
+                case 'game-end':
+                    // Store the board state to avoid losing it
+                    console.log("Received game end. Board state:", JSON.stringify(data.board));
+                    gameState.board = JSON.parse(JSON.stringify(data.board)); // Deeper clone
+                    gameState.scoreX = data.scoreX;
+                    gameState.scoreO = data.scoreO;
+                    gameState.gamesPlayed = data.gamesPlayed;
+                    updateGameBoard();
+                    updateScoreDisplay();
+                    
+                    if (data.winner === 'draw') {
+                        gameStatus.textContent = 'Game ended in a draw!';
+                    } else {
+                        gameStatus.textContent = `${data.winner} wins!`;
+                    }
+                    break;
+                    
+                case 'new-game':
+                    // Store the board state to avoid losing it
+                    gameState.board = JSON.parse(JSON.stringify(data.board)); // Deeper clone
+                    gameState.isMyTurn = data.isMyTurn;
+                    updateGameBoard();
+                    gameStatus.textContent = gameState.isMyTurn ? 
+                                          `Your turn (${gameState.isPlayerX ? 'X' : 'O'})` : 
+                                          "Opponent's turn";
+                    break;
+            }
+        }
+
+        // Event Listeners
+        startBtn.addEventListener('click', toggleTimer);
+        resetBtn.addEventListener('click', resetTimer);
+        syncBtn.addEventListener('click', shareSession);
+        focusDurationInput.addEventListener('change', updateTimerSettings);
+        restDurationInput.addEventListener('change', updateTimerSettings);
+        newGameBtn.addEventListener('click', startNewGame);
+        
+        reconnectBtn.addEventListener('click', () => {
+            if (connectionState.lastPeerId) {
+                // Show connection dialog
+                connectionDialog.style.display = 'flex';
+                connectionDialogTitle.textContent = 'Reconnecting to Session';
+                connectionState.isJoining = true;
+                
+                // Clear error display
+                connectionError.style.display = 'none';
+                retryConnectionBtn.style.display = 'none';
+                
+                // Update status
+                updateConnectionDialog('Attempting to reconnect...', 20);
+                
+                // Clean up existing connection
+                if (connectionState.connection) {
+                    connectionState.connection.close();
+                }
+                
+                if (connectionState.peer) {
+                    connectionState.peer.destroy();
+                }
+                
+                // Reinitialize and try to connect
+                initializePeer();
+                
+                setTimeout(() => {
+                    connectToPeer(connectionState.lastPeerId);
+                }, 1500);
+            } else {
+                showNotification('No previous connection found');
+            }
+        });
+        
+        createSessionBtn.addEventListener('click', () => {
+            console.log("Creating new session");
+            welcomeScreen.style.display = 'none';
+            connectionDialog.style.display = 'flex';
+            connectionDialogTitle.textContent = 'Creating New Session';
+            connectionState.isJoining = false;
+            
+            // Make sure URL field is clear and visible
+            shareUrl.value = '';
+            shareUrl.style.display = 'block';
+            
+            // Reset progress
+            updateConnectionDialog('Initializing session...', 10);
+            
+            // Initialize after a short delay to ensure UI updates
+            setTimeout(() => {
+                initializePeer();
+            }, 100);
+        });
+        
+        joinSessionBtn.addEventListener('click', () => {
+            console.log("Join session button clicked");
+            const urlParams = new URLSearchParams(window.location.search);
+            const peerId = urlParams.get('peer');
+            
+            if (peerId) {
+                console.log("Found peer ID in URL:", peerId);
+                welcomeScreen.style.display = 'none';
+                connectionDialog.style.display = 'flex';
+                connectionDialogTitle.textContent = 'Joining Session';
+                connectionState.isJoining = true;
+                connectionState.lastPeerId = peerId;
+                
+                // Reset progress
+                updateConnectionDialog('Preparing to join session...', 10);
+                
+                // Initialize after a short delay to ensure UI updates
+                setTimeout(() => {
+                    initializePeer();
+                    
+                    // Wait a bit for peer to initialize
+                    setTimeout(() => {
+                        connectToPeer(peerId);
+                    }, 1500);
+                }, 100);
+            } else {
+                const peerIdInput = prompt('Enter the share code from your friend:');
+                
+                if (peerIdInput) {
+                    console.log("User entered peer ID:", peerIdInput);
+                    welcomeScreen.style.display = 'none';
+                    connectionDialog.style.display = 'flex';
+                    connectionDialogTitle.textContent = 'Joining Session';
+                    connectionState.isJoining = true;
+                    
+                    // Clean up the input - remove any spaces and convert to uppercase
+                    const extractedPeerId = peerIdInput.trim().toUpperCase();
+                    console.log("Cleaned peer ID:", extractedPeerId);
+                    
+                    connectionState.lastPeerId = extractedPeerId;
+                    
+                    // Reset progress
+                    updateConnectionDialog('Preparing to join session...', 10);
+                    
+                    // Initialize after a short delay to ensure UI updates
+                    setTimeout(() => {
+                        initializePeer();
+                        
+                        // Wait a bit for peer to initialize
+                        setTimeout(() => {
+                            connectToPeer(extractedPeerId);
+                        }, 1500);
+                    }, 100);
+                }
+            }
+        });
+        
+        cancelConnectionBtn.addEventListener('click', () => {
+            // Clean up connection attempts
+            if (connectionState.connectionTimeout) {
+                clearTimeout(connectionState.connectionTimeout);
+            }
+            
+            if (connectionState.peer) {
+                connectionState.peer.destroy();
+            }
+            
+            // Reset the connection state
+            connectionState = {
+                peer: null,
+                peerId: null,
+                connection: null,
+                isConnected: false,
+                isHost: false,
+                isJoining: false,
+                connectionTimeout: null,
+                lastPeerId: null
+            };
+            
+            // Hide connection dialog and show welcome screen
+            connectionDialog.style.display = 'none';
+            welcomeScreen.style.display = 'flex';
+        });
+        
+        retryConnectionBtn.addEventListener('click', () => {
+            // Clear error state
+            connectionError.style.display = 'none';
+            retryConnectionBtn.style.display = 'none';
+            
+            // Update progress bar
+            updateConnectionDialog('Retrying connection...', 20);
+            
+            // Clean up any existing connection
+            if (connectionState.connection) {
+                connectionState.connection.close();
+            }
+            
+            if (connectionState.peer) {
+                connectionState.peer.destroy();
+            }
+            
+            // Reinitialize
+            initializePeer();
+            
+            // If we were joining, try to reconnect
+            if (connectionState.isJoining && connectionState.lastPeerId) {
+                setTimeout(() => {
+                    connectToPeer(connectionState.lastPeerId);
+                }, 1500);
+            }
+        });
+
+        // Initialize
+        initializeGameBoard();
+        updateTimerDisplay();
+        updateScoreDisplay();
+        
+        // Check URL for peer ID
+        const urlParams = new URLSearchParams(window.location.search);
+        const peerIdFromUrl = urlParams.get('peer');
+        
+        if (peerIdFromUrl) {
+            joinSessionBtn.click();
+        }
+    </script>
+</body>
+</html>
