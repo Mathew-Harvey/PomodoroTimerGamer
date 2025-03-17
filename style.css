@@ -1,0 +1,414 @@
+:root {
+    --primary: #5e60ce;
+    --primary-dark: #4e5dc9;
+    --secondary: #64dfdf;
+    --secondary-dark: #56c2c2;
+    --focus: #ff6b6b;
+    --rest: #48bfe3;
+    --text: #14213d;
+    --bg: #f8f9fa;
+    --light-gray: #e9ecef;
+    --card-bg: #ffffff;
+    --shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    --transition: all 0.3s ease;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: var(--bg);
+    color: var(--text);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.container {
+    max-width: 1000px;
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 30px;
+    position: relative;
+}
+
+@media (min-width: 900px) {
+    .container {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.card {
+    background-color: var(--card-bg);
+    border-radius: 15px;
+    box-shadow: var(--shadow);
+    padding: 30px;
+    transition: var(--transition);
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+h1 {
+    font-size: 2.2rem;
+    margin-bottom: 10px;
+    color: var(--primary);
+    text-align: center;
+}
+
+h2 {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+    color: var(--primary);
+}
+
+.timer-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.time-display {
+    font-size: 6rem;
+    font-weight: bold;
+    margin: 20px 0;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+}
+
+.status {
+    font-size: 1.5rem;
+    margin-bottom: 30px;
+    padding: 8px 20px;
+    border-radius: 50px;
+    font-weight: 600;
+}
+
+.status.focus {
+    background-color: var(--focus);
+    color: white;
+}
+
+.status.rest {
+    background-color: var(--rest);
+    color: white;
+}
+
+.controls {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+button {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: var(--transition);
+    background-color: var(--primary);
+    color: white;
+}
+
+button:hover {
+    background-color: var(--primary-dark);
+    transform: translateY(-2px);
+}
+
+button.secondary {
+    background-color: var(--secondary);
+    color: var(--text);
+}
+
+button.secondary:hover {
+    background-color: var(--secondary-dark);
+}
+
+button.outlined {
+    background-color: transparent;
+    border: 2px solid var(--primary);
+    color: var(--primary);
+}
+
+button.outlined:hover {
+    background-color: var(--primary);
+    color: white;
+}
+
+.timer-settings {
+    display: flex;
+    gap: 20px;
+    margin-top: 20px;
+    width: 100%;
+}
+
+.setting-group {
+    flex: 1;
+}
+
+.setting-label {
+    font-size: 0.9rem;
+    margin-bottom: 5px;
+    color: var(--text);
+    opacity: 0.7;
+}
+
+.setting-input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--light-gray);
+    border-radius: 5px;
+    font-size: 1rem;
+}
+
+/* Game Container Styles */
+.game-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* Game Selection Menu */
+.game-selector {
+    margin-bottom: 20px;
+    width: 100%;
+    text-align: center;
+}
+
+.game-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 10px;
+}
+
+.game-select-btn {
+    padding: 8px 16px;
+    font-size: 0.9rem;
+}
+
+.game-select-btn.active {
+    background-color: var(--primary-dark);
+}
+
+/* TicTacToe Specific Styles */
+.tictactoe-board {
+    display: grid;
+    grid-template-columns: repeat(3, 100px);
+    grid-template-rows: repeat(3, 100px);
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.tictactoe-cell {
+    width: 100px;
+    height: 100px;
+    background-color: var(--light-gray);
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 2.5rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.tictactoe-cell:hover {
+    background-color: var(--secondary);
+}
+
+.game-status {
+    margin-top: 20px;
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+
+.score-display {
+    display: flex;
+    gap: 20px;
+    margin: 15px 0;
+    justify-content: center;
+}
+
+.score-card {
+    background-color: var(--light-gray);
+    padding: 8px 15px;
+    border-radius: 8px;
+    font-weight: 600;
+}
+
+/* Connection Styles */
+.connection-info {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: var(--light-gray);
+    border-radius: 10px;
+    text-align: center;
+}
+
+.connection-status-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.status-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: #ff6b6b; /* Red for disconnected */
+    transition: background-color 0.3s ease;
+}
+
+.status-dot.connected {
+    background-color: #40c057; /* Green for connected */
+}
+
+.share-url {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--light-gray);
+    border-radius: 5px;
+    margin-top: 10px;
+    font-size: 0.9rem;
+    word-break: break-all;
+    text-align: center;
+}
+
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 25px;
+    background-color: var(--primary);
+    color: white;
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: var(--transition);
+    z-index: 1000;
+}
+
+.notification.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Welcome Screen */
+.welcome-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.welcome-card {
+    background-color: var(--card-bg);
+    border-radius: 15px;
+    padding: 40px;
+    max-width: 500px;
+    width: 90%;
+    text-align: center;
+}
+
+.welcome-title {
+    font-size: 2rem;
+    margin-bottom: 15px;
+    color: var(--primary);
+}
+
+.welcome-subtitle {
+    font-size: 1.1rem;
+    margin-bottom: 30px;
+    color: var(--text);
+    opacity: 0.8;
+}
+
+.welcome-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+}
+
+/* Connection Dialog */
+.connection-dialog {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.connection-card {
+    background-color: var(--card-bg);
+    border-radius: 15px;
+    padding: 40px;
+    max-width: 500px;
+    width: 90%;
+    text-align: center;
+}
+
+.connection-title {
+    font-size: 1.8rem;
+    margin-bottom: 15px;
+    color: var(--primary);
+}
+
+.connection-status {
+    font-size: 1.1rem;
+    margin: 20px 0;
+    color: var(--text);
+}
+
+.connection-progress {
+    width: 100%;
+    height: 8px;
+    background-color: var(--light-gray);
+    border-radius: 4px;
+    margin: 20px 0;
+    overflow: hidden;
+}
+
+.connection-progress-bar {
+    height: 100%;
+    background-color: var(--primary);
+    width: 0;
+    transition: width 0.3s ease;
+}
+
+.connection-error {
+    color: #ff6b6b;
+    margin: 15px 0;
+    padding: 10px;
+    background-color: #fff8f8;
+    border-radius: 8px;
+    display: none;
+}
