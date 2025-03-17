@@ -60,6 +60,16 @@ class MemoryGame extends GameInterface {
   
       // Initialize game board with cards
       this.createInitialGameBoard();
+
+      // Show game rules
+      this.showRules('Memory Game', `
+        <h3>How to Play:</h3>
+        <p>1. Players take turns flipping two cards at a time.</p>
+        <p>2. If the cards match, they stay face up and the player gets another turn.</p>
+        <p>3. If the cards don't match, they are flipped face down and it becomes the other player's turn.</p>
+        <p>4. The game ends when all pairs are matched.</p>
+        <p>5. The player with the most matched pairs wins!</p>
+      `);
     }
     
     /**
@@ -425,8 +435,11 @@ class MemoryGame extends GameInterface {
           break;
           
         case 'game-card-flip':
-          // Opponent flipped a card
-          this.flipCard(data.cardIndex);
+          // Only flip the card if it's not already flipped or matched
+          const cardElement = this.gameBoard.querySelector(`.memory-card[data-index="${data.cardIndex}"]`);
+          if (!cardElement.classList.contains('flipped') && !cardElement.classList.contains('matched')) {
+            this.flipCard(data.cardIndex);
+          }
           break;
           
         case 'game-match-found':

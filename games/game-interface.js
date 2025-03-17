@@ -59,4 +59,81 @@ class GameInterface {
     hide() {
       this.container.style.display = 'none';
     }
+
+    /**
+     * Show game rules in a modal dialog
+     * @param {string} title - Game title
+     * @param {string} rules - Game rules text
+     */
+    showRules(title, rules) {
+      // Create modal container
+      const modal = document.createElement('div');
+      modal.className = 'game-rules-modal';
+      modal.innerHTML = `
+        <div class="game-rules-content">
+          <h2>${title}</h2>
+          <div class="rules-text">${rules}</div>
+          <button class="close-rules-btn">Got it!</button>
+        </div>
+      `;
+
+      // Add styles
+      const style = document.createElement('style');
+      style.textContent = `
+        .game-rules-modal {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: rgba(0, 0, 0, 0.8);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          z-index: 1000;
+        }
+        .game-rules-content {
+          background: var(--card-bg);
+          padding: 30px;
+          border-radius: 15px;
+          max-width: 500px;
+          width: 90%;
+          text-align: center;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .game-rules-content h2 {
+          color: var(--primary);
+          margin-bottom: 20px;
+          font-size: 24px;
+        }
+        .rules-text {
+          text-align: left;
+          line-height: 1.6;
+          margin-bottom: 20px;
+          color: var(--text-color);
+        }
+        .close-rules-btn {
+          background: var(--primary);
+          color: white;
+          border: none;
+          padding: 10px 20px;
+          border-radius: 5px;
+          cursor: pointer;
+          font-size: 16px;
+          transition: background-color 0.2s;
+        }
+        .close-rules-btn:hover {
+          background: var(--primary-dark);
+        }
+      `;
+      document.head.appendChild(style);
+
+      // Add to document
+      document.body.appendChild(modal);
+
+      // Add close button handler
+      modal.querySelector('.close-rules-btn').addEventListener('click', () => {
+        modal.remove();
+      });
+    }
   }

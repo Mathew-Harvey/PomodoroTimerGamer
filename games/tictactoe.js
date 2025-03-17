@@ -55,6 +55,15 @@ class TicTacToe extends GameInterface {
       
       // Event listener for new game button
       this.newGameBtn.addEventListener('click', () => this.startNewGame());
+
+      // Show game rules
+      this.showRules('Tic-Tac-Toe', `
+        <h3>How to Play:</h3>
+        <p>1. Players take turns placing their symbol (X or O) in an empty square.</p>
+        <p>2. The first player to get 3 of their symbols in a row (horizontally, vertically, or diagonally) wins!</p>
+        <p>3. If all squares are filled and no player has 3 in a row, the game is a draw.</p>
+        <p>4. Player X (host) goes first, followed by Player O.</p>
+      `);
     }
     
     /**

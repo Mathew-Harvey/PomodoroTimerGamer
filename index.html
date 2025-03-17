@@ -43,6 +43,15 @@
         
         <!-- Game Container -->
         <div class="card game-container" id="gameContainer" style="display: none;">
+            <div class="game-menu">
+                <h2>Select a Game</h2>
+                <div class="game-buttons">
+                    <button class="game-select-btn" data-game="tictactoe">Tic Tac Toe</button>
+                    <button class="game-select-btn" data-game="memory">Memory Game</button>
+                    <button class="game-select-btn" data-game="minicraft">MiniCraft</button>
+                </div>
+            </div>
+            <button id="playNowBtn" class="play-now-btn">Play Now</button>
             <!-- Games will be dynamically loaded here by the GameManager -->
         </div>
     </div>
@@ -78,9 +87,13 @@
     <!-- Load game interface first -->
     <script src="./games/game-interface.js"></script>
     
+    <!-- Load game instructions helper -->
+    <script src="./games/game-instructions.js"></script>
+    
     <!-- Load game implementations -->
     <script src="./games/tictactoe.js"></script>
     <script src="./games/memory-game.js"></script>
+    <script src="./games/mini-craft.js"></script>
     
     <!-- Load game manager -->
     <script src="./games/game-manager.js"></script>

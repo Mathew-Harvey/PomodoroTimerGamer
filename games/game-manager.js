@@ -35,14 +35,15 @@ class GameManager {
       // Register available games
       this.registerGame('tictactoe', new TicTacToe(this.gameContainerId, this.connectionState));
       this.registerGame('memory', new MemoryGame(this.gameContainerId, this.connectionState));
-      
-      // You can add more games here
-      // this.registerGame('memory', new MemoryGame(this.gameContainerId, this.connectionState));
+      this.registerGame('minicraft', new MiniCraft(this.gameContainerId, this.connectionState));
       
       // Initialize all games
       for (const gameId in this.games) {
         this.games[gameId].initialize();
         this.games[gameId].hide();
+        
+        // Add instructions to each game container
+        GameInstructions.addInstructions(gameId, this.games[gameId].boardContainer);
       }
       
       // Create the game selector menu

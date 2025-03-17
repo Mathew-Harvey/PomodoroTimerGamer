@@ -45,12 +45,12 @@ document.addEventListener('DOMContentLoaded', () => {
   // Set up DOM references
   setupDOMReferences();
   
-  // Set up event listeners
-  setupEventListeners();
-  
-  // Initialize game manager
+  // Initialize game manager first
   gameManager = new GameManager(connectionState);
   gameManager.initialize();
+  
+  // Set up event listeners after game manager is initialized
+  setupEventListeners();
   
   // Initialize timer display
   updateTimerDisplay();
@@ -105,6 +105,27 @@ function setupEventListeners() {
   joinSessionBtn.addEventListener('click', handleJoinSession);
   cancelConnectionBtn.addEventListener('click', handleCancelConnection);
   retryConnectionBtn.addEventListener('click', handleRetryConnection);
+  document.getElementById('useTimerOnlyBtn').addEventListener('click', handleUseTimerOnly);
+  
+  // Add event listener for play now button
+  const playNowBtn = document.getElementById('playNowBtn');
+  if (playNowBtn) {
+    playNowBtn.addEventListener('click', handlePlayNow);
+  }
+  
+  // Add event listeners for game selection buttons
+  const gameButtons = document.querySelectorAll('.game-select-btn');
+  gameButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      const gameId = button.dataset.game;
+      if (gameManager) {
+        gameManager.switchGame(gameId);
+        // Highlight selected game button
+        gameButtons.forEach(btn => btn.classList.remove('active'));
+        button.classList.add('active');
+      }
+    });
+  });
 }
 
 /**
@@ -127,13 +148,17 @@ function updateTimerDisplay() {
   if (timerState.isFocusTime) {
     statusDisplay.textContent = 'Focus Time';
     statusDisplay.className = 'status focus';
-    // Hide games during focus time
-    gameManager.hideCurrentGame();
+    // Only try to hide game if gameManager exists
+    if (gameManager) {
+      gameManager.hideCurrentGame();
+    }
   } else {
     statusDisplay.textContent = 'Rest Time';
     statusDisplay.className = 'status rest';
-    // Show games during rest time
-    gameManager.showCurrentGame();
+    // Only try to show game if gameManager exists
+    if (gameManager) {
+      gameManager.showCurrentGame();
+    }
   }
   
   startBtn.textContent = timerState.isRunning ? 'Pause' : 'Start';
@@ -794,5 +819,38 @@ function handleRetryConnection() {
     setTimeout(() => {
       connectToPeer(connectionState.lastPeerId);
     }, 1500);
+  }
+}
+
+/**
+ * Handle use timer only button click
+ */
+function handleUseTimerOnly() {
+  // Hide welcome screen
+  welcomeScreen.style.display = 'none';
+  
+  // Hide connection-related elements
+  syncBtn.style.display = 'none';
+  connectionInfo.style.display = 'none';
+  
+  // Show notification
+  showNotification('Timer started in solo mode');
+  
+  // Initialize timer display
+  updateTimerDisplay();
+}
+
+/**
+ * Handle play now button click
+ */
+function handlePlayNow() {
+  // Show game container
+  const gameContainer = document.getElementById('gameContainer');
+  gameContainer.style.display = 'flex';
+  
+  // Show current game
+  if (gameManager) {
+    gameManager.showCurrentGame();
+    gameManager.resetCurrentGame();
   }
 }

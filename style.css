@@ -412,3 +412,79 @@ button.outlined:hover {
     border-radius: 8px;
     display: none;
 }
+
+.play-now-btn {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    margin: 20px auto;
+    display: block;
+    transition: all 0.2s ease;
+}
+
+.play-now-btn:hover {
+    background: var(--primary-dark);
+    transform: translateY(-2px);
+}
+
+.game-menu {
+    width: 100%;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.game-menu h2 {
+    margin-bottom: 15px;
+    color: var(--primary);
+}
+
+.game-buttons {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.game-select-btn {
+    padding: 10px 20px;
+    font-size: 1rem;
+    background: var(--secondary);
+    color: var(--text);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.game-select-btn:hover {
+    background: var(--secondary-dark);
+    transform: translateY(-2px);
+}
+
+.game-select-btn.active {
+    background: var(--primary);
+    color: white;
+}
+
+.play-now-btn {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    margin: 20px auto;
+    display: block;
+    transition: all 0.2s ease;
+}
+
+.play-now-btn:hover {
+    background: var(--primary-dark);
+    transform: translateY(-2px);
+}
